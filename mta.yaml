@@ -1,0 +1,53 @@
+_schema-version: '3.1'
+ID: SM_Vendor_Feedback_Contract_CAPM
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+modules:
+  - name: SM_Vendor_Feedback_Contract_CAPM-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      readiness-health-check-type: http
+      readiness-health-check-http-endpoint: /health
+    build-parameters:
+      builder: npm
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: SM_Vendor_Feedback_Contract_CAPM-auth
+      - name: SM_Vendor_Feedback_Contract_CAPM-db
+
+  - name: SM_Vendor_Feedback_Contract_CAPM-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: SM_Vendor_Feedback_Contract_CAPM-db
+
+resources:
+  - name: SM_Vendor_Feedback_Contract_CAPM-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: SM_Vendor_Feedback_Contract_CAPM-${org}-${space}
+        tenant-mode: dedicated
+  - name: SM_Vendor_Feedback_Contract_CAPM-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
