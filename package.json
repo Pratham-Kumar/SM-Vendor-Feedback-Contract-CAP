@@ -27,8 +27,10 @@
   },
   "cds": {
     "requires": {
-      "auth": "xsuaa",
       "db": "hana"
+    },
+    "hana": {
+      "deploy-format": "hdbtable"
     }
   }
 }
